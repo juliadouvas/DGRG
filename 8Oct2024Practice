@@ -1,0 +1,40 @@
+import pandas as pd
+import numpy as np
+import statsmodels.api as sm
+
+# Load your genotype and phenotype data
+# Assuming genotypes are in a DataFrame where rows are individuals and columns are SNPs
+# Phenotype is a Series with individuals' trait values
+genotype_data = pd.read_csv('genotype_data.csv')  # SNPs in columns
+phenotype_data = pd.read_csv('phenotype_data.csv')  # Trait values
+
+# Example: SNP columns are named SNP1, SNP2, etc.
+results = []
+
+# Loop through each SNP
+for snp in genotype_data.columns:
+    # Prepare the data for the regression
+    X = genotype_data[snp].values  # Genotype data for the SNP
+    y = phenotype_data['trait'].values  # Trait values
+
+    # Add a constant (intercept) to the model
+    X = sm.add_constant(X)
+
+    # Fit the linear regression model
+    model = sm.OLS(y, X)
+    results_model = model.fit()
+
+    # Extract the p-value for the SNP
+    p_value = results_model.pvalues[1]  # p-value for the SNP (1st is the intercept)
+
+    results.append({'SNP': snp, 'p_value': p_value})
+
+# Convert results to a DataFrame
+results_df = pd.DataFrame(results)
+
+# Save results to a CSV file
+results_df.to_csv('gwas_results.csv', index=False)
+
+# Optional: Filter results by a significance threshold (e.g., 0.05)
+significant_results = results_df[results_df['p_value'] < 0.05]
+print(significant_results)
